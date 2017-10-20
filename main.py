@@ -14,7 +14,7 @@ K.set_image_dim_ordering('th')
 np.set_printoptions(threshold=np.inf)
 
 batch_size = 16
-epochs = 1000
+epochs = 5000
 
 def label_to_int(lbl):
     if lbl == 'line':
@@ -60,7 +60,7 @@ print('labels shape:', train_labels.shape)
 model = Sequential()
 model.add(Conv2D(10,
         kernel_size=(2, 2),
-        activation='relu',
+        activation='tanh',
         padding='same',
         input_shape=(10, 10, 1)))
 model.add(MaxPooling2D(pool_size=(1, 1),
@@ -70,7 +70,7 @@ model.add(MaxPooling2D(pool_size=(1, 1),
 model.add(Dropout(0.1))
 model.add(Conv2D(10,
         kernel_size=(2, 2),
-        activation='relu',
+        activation='tanh',
         padding='same'))
 model.add(MaxPooling2D(pool_size=(1, 1),
         strides=2,
@@ -78,7 +78,7 @@ model.add(MaxPooling2D(pool_size=(1, 1),
         data_format=None))
 model.add(Flatten())
 
-#
+#"Squash" to probabilities
 model.add(Dense(4, activation='softmax'))
 
 model.summary()
