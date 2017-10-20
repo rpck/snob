@@ -8,6 +8,7 @@ from keras.layers import Conv2D, MaxPooling2D
 from keras.optimizers import SGD
 from keras.utils import np_utils
 from keras import backend as K
+import re
 
 K.set_image_dim_ordering('th')
 np.set_printoptions(threshold=np.inf)
@@ -26,14 +27,15 @@ def label_to_int(lbl):
         return 3
     return 0
 
-def load_dataset(dataset_dir):
+def load_dataset(dataset_dir, parity):
     # Our classifications
     dataset = []
     labels = []
     for subdir, dirs, files in os.walk(dataset_dir):
         for f in files:
             filepath = subdir + os.sep + f
-            if filepath.endswith('.csv'):
+            if filepath.endswith('.csv') and int(re.findall('\d+', filepath)[0]) % 2 == parity:
+                print(filepath)
                 data = np.loadtxt(filepath, delimiter=',')
                 # Get the subdirectory after the path seperator
                 label = subdir[subdir.find(os.sep) + 1:]
@@ -42,12 +44,17 @@ def load_dataset(dataset_dir):
     return (np.array(dataset), np.array(labels))
 
 # Load the dataset and reshape
-loaded = load_dataset('dataset')
-dataset = loaded[0].reshape(len(loaded[0]), 10, 10, 1)
-labels = np_utils.to_categorical(loaded[1], 4)
+train_set = load_dataset('dataset', 1)
+test_set = load_dataset('dataset', 0)
 
-print('dataset shape:', dataset.shape)
-print('labels shape:', labels.shape)
+train_dataset = train_set[0].reshape(len(train_set[0]), 10, 10, 1)
+train_labels = np_utils.to_categorical(train_set[1], 4)
+
+test_dataset = test_set[0].reshape(len(test_set[0]), 10, 10, 1)
+test_labels = np_utils.to_categorical(test_set[1], 4)
+
+print('dataset shape:', train_dataset.shape)
+print('labels shape:', train_labels.shape)
 
 # Use tanh instead of ReLU to prevent NaN errors
 model = Sequential()
@@ -71,6 +78,7 @@ model.add(MaxPooling2D(pool_size=(1, 1),
         data_format=None))
 model.add(Flatten())
 
+#
 model.add(Dense(4, activation='softmax'))
 
 model.summary()
@@ -84,20 +92,23 @@ def constrainedCrossEntropy(ytrue, ypred):
 model.compile(loss=constrainedCrossEntropy,
               optimizer=sgd,
               metrics=['accuracy'])
+filepath = 'model.h5'
+model.fit(train_dataset, train_labels,
+    batch_size=batch_size,
+    epochs=epochs,
+    verbose=1,
+    validation_data=(test_dataset, test_labels))
 
-model.fit(dataset, labels,
-    batch_size=batch_size, epochs=epochs, verbose=1)
-
-score = model.evaluate(dataset, labels, verbose=0)
+#Evaluate on other half of dataset
+score = model.evaluate(test_dataset, test_labels, verbose=0)
 print('Test loss:', score[0])
 print('Test accuracy:', score[1])
 
 #Saves the model
 #Serialize model to JSON
-
 model_json = model.to_json()
 with open("model.json", "w") as json_file:
     json_file.write(model_json)
-# serialize weights to HDF5
+#Serialize weights to HDF5
 model.save_weights("model.h5")
 print("Saved model to disk")
