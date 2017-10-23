@@ -24,25 +24,33 @@ def label_to_int(lbl):
         return 3
     return 0
 
-def load_dataset(dataset_dir, parity):
+def load_dataset(dataset_dir):
     # Our classifications
     dataset = []
+    test = []   
     labels = []
+    test_labels = []
+    i = 0
     for subdir, dirs, files in os.walk(dataset_dir):
         for f in files:
             filepath = subdir + os.sep + f
-            if filepath.endswith('.csv') and int(re.findall('\d+', filepath)[0]) % 2 == parity:
-                print(filepath)
+            if filepath.endswith('.csv'):
                 data = np.loadtxt(filepath, delimiter=',')
                 # Get the subdirectory after the path seperator
                 label = subdir[subdir.find(os.sep) + 1:]
-                dataset.append(data)
-                labels.append(label_to_int(label))
-    return (np.array(dataset), np.array(labels))
+                if i % 4 == 0:
+                    test_labels.append(label_to_int(label))
+                    test.append(label)
+                else:
+                    dataset.append(data)
+                    labels.append(label_to_int(label))                
+                i += 1
+    return (np.array(dataset), np.array(labels)), (np.array(test), np.array(test_labels))
 
 # Load the dataset and reshape
-train_set = load_dataset('dataset', 1)
-test_set = load_dataset('dataset', 0)
+train_set, test_set = load_dataset('dataset')
+print(train_set)
+#print(test_set)
 
 input_shape = (1, 10, 10)
 train_dataset = ()
