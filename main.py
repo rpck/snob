@@ -27,8 +27,8 @@ def label_to_int(lbl):
 def load_dataset(dataset_dir):
     # Our classifications
     dataset = []
-    test = []   
     labels = []
+    test = []   
     test_labels = []
     i = 0
     for subdir, dirs, files in os.walk(dataset_dir):
@@ -39,8 +39,8 @@ def load_dataset(dataset_dir):
                 # Get the subdirectory after the path seperator
                 label = subdir[subdir.find(os.sep) + 1:]
                 if i % 4 == 0:
+                    test.append(data)
                     test_labels.append(label_to_int(label))
-                    test.append(label)
                 else:
                     dataset.append(data)
                     labels.append(label_to_int(label))                
@@ -49,8 +49,8 @@ def load_dataset(dataset_dir):
 
 # Load the dataset and reshape
 train_set, test_set = load_dataset('dataset')
-print(train_set)
-#print(test_set)
+#print(train_set)
+print(test_set)
 
 input_shape = (1, 10, 10)
 train_dataset = ()
