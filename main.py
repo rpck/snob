@@ -10,9 +10,6 @@ from keras.utils import np_utils
 from keras import backend as K
 import re
 
-K.set_image_dim_ordering('th')
-np.set_printoptions(threshold=np.inf)
-
 batch_size = 16
 epochs = 5000
 
@@ -47,10 +44,19 @@ def load_dataset(dataset_dir, parity):
 train_set = load_dataset('dataset', 1)
 test_set = load_dataset('dataset', 0)
 
-train_dataset = train_set[0].reshape(len(train_set[0]), 10, 10, 1)
-train_labels = np_utils.to_categorical(train_set[1], 4)
+input_shape = (1, 10, 10)
+train_dataset = ()
+test_dataset = ()
+if K.image_data_format() == 'channels_first':
+    train_dataset = train_set[0].reshape(len(train_set[0]), 1, 10, 10)
+    test_dataset = test_set[0].reshape(len(test_set[0]), 1, 10, 10)
+    input_shape = (1, 10, 10)
+else:
+    train_dataset = train_set[0].reshape(len(train_set[0]), 10, 10, 1)
+    test_dataset = test_set[0].reshape(len(test_set[0]), 10, 10, 1)
+    input_shape = (10, 10, 1)
 
-test_dataset = test_set[0].reshape(len(test_set[0]), 10, 10, 1)
+train_labels = np_utils.to_categorical(train_set[1], 4)
 test_labels = np_utils.to_categorical(test_set[1], 4)
 
 print('dataset shape:', train_dataset.shape)
@@ -62,7 +68,7 @@ model.add(Conv2D(10,
         kernel_size=(2, 2),
         activation='tanh',
         padding='same',
-        input_shape=(10, 10, 1)))
+        input_shape=input_shape))
 model.add(MaxPooling2D(pool_size=(1, 1),
         strides=2,
         padding='same',
